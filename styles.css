@@ -1,0 +1,187 @@
+/* 基本スタイル */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f9f9f9;
+}
+
+/* メインコンテンツ */
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* コンテナ */
+.container {
+  width: 100%;
+  max-width: 600px; /* フォームと投稿リストを600pxに固定 */
+  margin: 0 auto; /* 中央寄せ */
+  padding: 10px; /* 余白をコンパクトに */
+  box-sizing: border-box;
+}
+
+/* 投稿フォーム */
+.post-form {
+  background-color: #fff;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  padding: 20px; /* パディングを少し減らす */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px; /* フォームと投稿リストの間隔を調整 */
+}
+
+.post-form h2 {
+  margin-bottom: 15px;
+  text-align: center;
+  color: #333;
+}
+
+.form-label {
+  display: flex;
+  align-items: center; /* ラベルと入力フィールドを横並びにする */
+  margin-bottom: 15px; /* 余白を少し減らす */
+  font-size: 1em;
+  color: #555;
+}
+
+.form-label span {
+  margin-bottom: 5px; /* ラベルと入力フィールドの間隔を調整 */
+  color: red;
+}
+
+.form-input,
+.form-textarea {
+  padding: 10px;
+  border: 2px solid #ccc;
+  border-radius: 5px;
+  font-size: 1.1em;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 10px; /* 入力フィールド間の余白を小さく */
+}
+
+.form-input:focus,
+.form-textarea:focus {
+  border-color: #4CAF50;
+  outline: none;
+}
+
+.image-preview {
+  display: block;
+  margin: 15px auto;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.submit-button {
+  background-color: #4CAF50;
+  border: none;
+  color: white;
+  padding: 12px 24px;
+  font-size: 1.2em;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  display: block;
+  margin: 0 auto;
+}
+
+.submit-button:hover {
+  background-color: #45a049;
+}
+
+/* 投稿一覧のスタイル */
+.post-list {
+  grid-template-columns: 1fr; /* スマホでは1列 */
+  gap: 15px; /* 投稿アイテムの間隔を調整 */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.post-item {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.post-item h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.post-item p {
+  color: #555;
+  line-height: 1.5;
+}
+
+.post-image {
+  max-width: 100%;
+  height: auto;
+  margin: 10px 0;
+  border-radius: 5px;
+}
+
+.post-time {
+  text-align: right;
+  font-size: 0.9em;
+  color: #888;
+}
+
+.post-item p {
+  color: #555;
+  line-height: 1.5;
+  word-wrap: break-word; /* 長い単語を折り返す */
+  overflow-wrap: break-word; /* こちらも長い単語を折り返す */
+  white-space: normal; /* 必要に応じてテキストを折り返す */
+}
+
+.error-message {
+  font-weight: bold;
+  color: red;
+}
+
+/* フッター */
+footer.desktop-footer {
+  display: flex;
+  height: 50px;
+  text-align: center;
+  background: lightgray;
+  justify-content: center;
+  color: gray;
+}
+
+/* レスポンシブデザイン */
+@media (min-width: 768px) {
+  /* PCでは2列にする */
+  .post-list {
+    grid-template-columns: 1fr 1fr; /* PC用の2列レイアウト */ 
+    display: grid;
+  }
+
+  /* 投稿フォームと投稿一覧の幅を一致させる */
+  .container,
+  .post-form,
+  .post-list {
+    max-width: 800px;
+  }
+}
+
+@media (max-width: 767px) {
+  .post-list {
+    grid-template-columns: 1fr; /* スマホでは1列レイアウト */
+  }
+
+  .form-label {
+    display: block;
+  }
+}

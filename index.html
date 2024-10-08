@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>掲示板アプリ</title>
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- ReactとReactDOMをCDNから読み込む -->
+  <!-- React 18の正しいバージョンを使用 -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <!-- BabelをCDNから読み込む（ブラウザでJSXをトランスパイル） -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+  <!-- メインコンテンツ -->
+  <main id="root"></main>
+
+  <!-- Reactコード -->
+  <script type="text/babel">
+    // APIエンドポイント
+    const API_POST = 'https://wr350hezrc.execute-api.ap-northeast-1.amazonaws.com/default/keijiwrite2';
+    const API_GET = 'https://q6z189xuy2.execute-api.ap-northeast-1.amazonaws.com/default/keijiread';
+
+    function App() {
+      const [name, setName] = React.useState('');
+      const [msg, setMsg] = React.useState('');
+      const [image, setImage] = React.useState(null);
+      const [previewSrc, setPreviewSrc] = React.useState('');
+      const [posts, setPosts] = React.useState([]);
+      const [loading, setLoading] = React.useState(false);
+      const [error, setError] = React.useState(null);
+      const [formError, setFormError] = React.useState('');
+      const [showSuccess, setShowSuccess] = React.useState(false); // 成功アラート用の状態
+
+      // 定義した文字数制限
+      const NAME_MAX_LENGTH = 50;
+      const MSG_MAX_LENGTH = 500;
+
+      // 投稿一覧を取得する関数
+      const fetchPosts = React.useCallback(async () => {
+        setLoading(true);
+        try {
+          const response = await fetch(API_GET);
+          if (!response.ok) {
+            throw new Error('データの取得に失敗しました');
+          }
+          const data = await response.json();
+          setPosts(data.Items || []);
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      }, []);
+
+      // 初回レンダリング時に投稿一覧を取得
+      React.useEffect(() => {
+        fetchPosts();
+      }, [fetchPosts]);
+
+      // 画像アップロード処理
+      const handleImageUpload = (e) => {
+        const file = e.target.files[0];
+        if (file && !file.type.match(/^image\/jpe?g$/)) {
+          alert('対応するファイルはJPEG形式のみです。');
+          return;
+        }
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(event) {
+            setPreviewSrc(event.target.result);
+            setImage(file);
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+
+      // バリデーションチェック
+      const validateForm = () => {
+        if (!name.trim()) {
+          setFormError('お名前を入力してください');
+          return false;
+        }
+        if (name.length > NAME_MAX_LENGTH) {
+          setFormError(`お名前は${NAME_MAX_LENGTH}文字以内で入力してください`);
+          return false;
+        }
+        if (!msg.trim()) {
+          setFormError('投稿内容を入力してください');
+          return false;
+        }
+        if (msg.length > MSG_MAX_LENGTH) {
+          setFormError(`投稿内容は${MSG_MAX_LENGTH}文字以内で入力してください`);
+          return false;
+        }
+        setFormError('');
+        return true;
+      };
+
+      // 投稿処理
+      const postArticle = async () => {
+        if (!validateForm()) {
+          return;
+        }
+
+        let data = { name: name.trim(), msg: msg.trim() };
+        if (image) {
+          const reader = new FileReader();
+          reader.onload = async function(event) {
+            data.image = event.target.result.split(',')[1];
+            await postArticleData(data);
+          };
+          reader.readAsDataURL(image);
+        } else {
+          await postArticleData(data);
+        }
+      };
+
+      // APIへのデータ送信
+      const postArticleData = async (data) => {
+        try {
+          const response = await fetch(API_POST, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+          });
+          if (!response.ok) {
+            throw new Error('ネットワークエラー');
+          }
+          // 成功した場合は投稿一覧を再取得
+          setName('');
+          setMsg('');
+          setImage(null);
+          setPreviewSrc('');
+          setShowSuccess(true); // 成功アラートを表示
+          await fetchPosts();
+          // 3秒後にアラートを非表示
+          setTimeout(() => {
+            setShowSuccess(false);
+          }, 3000);
+        } catch (error) {
+          alert('エラー: ' + error.message);
+        }
+      };
+
+      // ユーザー入力をエスケープする関数
+      const escapeHtml = (unsafe) => {
+        return unsafe.replace(/[&<"'>]/g, (match) => {
+          const escape = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;',
+          };
+          return escape[match];
+        });
+      };
+
+      return (
+        <div className="container">
+          {/* 成功アラート */}
+          {showSuccess && (
+            <div className="success-alert">
+              投稿が成功しました！
+            </div>
+          )}
+
+          <form onSubmit={(e) => e.preventDefault()} className="post-form">
+            <h2>新規投稿</h2>
+            <label htmlFor="name" className="form-label">
+              お名前<span className="required">*</span>：
+              <input
+                type="text"
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="form-input"
+                placeholder="お名前を入力してください"
+                maxLength={NAME_MAX_LENGTH}
+              />
+              <small className="char-count">{name.length}/{NAME_MAX_LENGTH}文字</small>
+            </label>
+            <label htmlFor="msg" className="form-label">
+              投稿内容<span className="required">*</span>：
+              <textarea
+                id="msg"
+                cols="40"
+                rows="5"
+                value={msg}
+                onChange={(e) => setMsg(e.target.value)}
+                className="form-textarea"
+                placeholder="投稿内容を入力してください"
+                maxLength={MSG_MAX_LENGTH}
+              ></textarea>
+              <small className="char-count">{msg.length}/{MSG_MAX_LENGTH}文字</small>
+            </label>
+            <label htmlFor="image" className="form-label">
+              画像（JPEGのみ）：
+              <input
+                type="file"
+                id="image"
+                accept="image/jpeg"
+                onChange={handleImageUpload}
+                className="form-input"
+              />
+            </label>
+            {/* バリデーションエラーメッセージ */}
+            {formError && <p className="error-message">{formError}</p>}
+            {/* 画像のプレビュー */}
+            {previewSrc && <img src={previewSrc} alt="プレビュー" className="image-preview" />}
+            <button type="button" onClick={postArticle} className="submit-button">投稿</button>
+          </form>
+
+          {/* エラーメッセージ */}
+          {error && <p className="error-message">{error}</p>}
+
+          {/* ローディング状態 */}
+          {loading ? (
+            <p>読み込み中...</p>
+          ) : (
+            <div className="post-list">
+              {posts.map((post) => (
+                <div key={post.id} className="post-item">
+                  <h3>{escapeHtml(post.name)}</h3>
+                  <p>{escapeHtml(post.msg)}</p>
+                  {post.hasimage === 1 && post.image_url && (
+                    <img src={post.image_url} alt="投稿画像" className="post-image" />
+                  )}
+                  <p className="post-time">{post.postat}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Reactアプリをレンダリング
+    const rootElement = document.getElementById('root');
+    const root = ReactDOM.createRoot(rootElement);
+    root.render(<App />);
+  </script>
+
+  <!-- フッター（オプション） -->
+  <footer class="desktop-footer">
+    <p>&copy; お知らせ掲示板</p>
+  </footer>
+</body>
+</html>
